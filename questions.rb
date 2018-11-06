@@ -12,11 +12,17 @@ class QuestionsDatabase < SQLite3::Database
   
 end
 
+
 ##########################################################################################################################################################################################################################################################################################
 
 
 class User 
   attr_accessor :id, :fname, :lname
+  
+  def self.all
+    data = QuestionsDatabase.instance.execute("SELECT * FROM users")
+    data.map { |datum| User.new(datum) }
+  end
   
   def self.find_by_id(id_input)
     user = QuestionsDatabase.instance.execute(<<-SQL, id_input)
@@ -45,31 +51,47 @@ class User
   
 end
 
+
 ##########################################################################################################################################################################################################################################################################################
 
+
 class Question   
-  attr_accessor :_____, :______, :______, :______
+  attr_accessor :id, :body, :title, :author_id
+  
+  def self.all
+    data = QuestionsDatabase.instance.execute("SELECT * FROM questions")
+    data.map { |datum| Question.new(datum) }
+  end
   
   def self.find_by_id(id_input)
-    _______ = QuestionsDatabase.instance.execute(<<-SQL, id_input)
+    question = QuestionsDatabase.instance.execute(<<-SQL, id_input)
       SELECT *
-      FROM ________ 
+      FROM questions
       WHERE id = ?
     SQL
     
-    return nil unless _______.length > 0
+    return nil unless question.length > 0
     
-    _________.new(______.first)
+    Question.new(question.first)
   end
   
   def self.find_by_title(question_title)
+    question = QuestionsDatabase.instance.execute(<<-SQL, question_title)
+      SELECT * 
+      FROM questions 
+      WHERE title = ?
+    SQL
+    
+    return nil unless question.length > 0 
+    
+    Question.new(question.first)
   end
   
   def initialize(options)
     @id = options['id']
-    @______ = options['______']
-    @_____ = options['______']
-    @________ = options['_______']
+    @title = options['title']
+    @body = options['body']
+    @author_id = options['author_id']
   end
 end
 
@@ -77,74 +99,93 @@ end
 ##########################################################################################################################################################################################################################################################################################
 
 
-class QuestionFollows 
-  attr_accessor :_____, :______, :______
+class QuestionFollow 
+  attr_accessor :id, :user_id, :question_id
+  
+  def self.all
+    data = QuestionsDatabase.instance.execute("SELECT * FROM question_follows")
+    data.map { |datum| QuestionFollow.new(datum) }
+  end
   
   def self.find_by_id(id_input)
-    _______ = QuestionsDatabase.instance.execute(<<-SQL, id_input)
+    question_follow = QuestionsDatabase.instance.execute(<<-SQL, id_input)
       SELECT *
-      FROM ________ 
+      FROM question_follows
       WHERE id = ?
     SQL
     
-    return nil unless _______.length > 0
+    return nil unless question_follow.length > 0
     
-    _________.new(______.first)
+    QuestionFollow.new(question_follow.first)
   end
   
   def initialize(options)
     @id = options['id']
-    @______ = options['______']
-    @_____ = options['______']
+    @user_id = options['user_id']
+    @question_id = options['question_id']
   end
 end 
 
+
 ##########################################################################################################################################################################################################################################################################################
+
 
 class Reply 
-  attr_accessor :_____, :______, :______, :________, :______
+  attr_accessor :id, :question_id, :user_id, :parent_id, :body
+  
+  def self.all
+    data = QuestionsDatabase.instance.execute("SELECT * FROM replies")
+    data.map { |datum| Reply.new(datum) }
+  end
   
   def self.find_by_id(id_input)
-    _______ = QuestionsDatabase.instance.execute(<<-SQL, id_input)
+    reply = QuestionsDatabase.instance.execute(<<-SQL, id_input)
       SELECT *
-      FROM ________ 
+      FROM replies 
       WHERE id = ?
     SQL
     
-    return nil unless _______.length > 0
+    return nil unless reply.length > 0
     
-    _________.new(______.first)
+    Reply.new(reply.first)
   end
   
   def initialize(options)
     @id = options['id']
-    @______ = options['______']
-    @_____ = options['______']
-    @________ = options['_______']
-    @________ = options['_______']
+    @question_id = options['question_id']
+    @user_id = options['user_id']
+    @parent_id = options['parent_id']
+    @body = options['body']
   end
 end 
 
+
 ##########################################################################################################################################################################################################################################################################################
 
-class QuestionLikes 
-  attr_accessor :_____, :______, :______
+
+class QuestionLike 
+  attr_accessor :id, :question_id, :user_id
+  
+  def self.all
+    data = QuestionsDatabase.instance.execute("SELECT * FROM question_likes")
+    data.map { |datum| QuestionLike.new(datum) }
+  end
   
   def self.find_by_id(id_input)
-    _______ = QuestionsDatabase.instance.execute(<<-SQL, id_input)
+    like = QuestionsDatabase.instance.execute(<<-SQL, id_input)
       SELECT *
-      FROM ________ 
+      FROM question_likes
       WHERE id = ?
     SQL
     
-    return nil unless _______.length > 0
+    return nil unless like.length > 0
     
-    _________.new(______.first)
+    QuestionLike.new(like.first)
   end
   
   def initialize(options)
     @id = options['id']
-    @______ = options['______']
-    @_____ = options['______']
+    @question_id = options['question_id']
+    @user_id = options['user_id']
   end
 end
