@@ -70,20 +70,34 @@ CREATE TABLE question_likes (
   INSERT INTO
     question_follows (user_id, question_id)
   VALUES
-    ((SELECT id FROM users WHERE fname = 'Debbie'), (SELECT id FROM questions WHERE title = 'Time commitment?'));
+    ((SELECT id FROM users WHERE fname = 'Debbie'), (SELECT id FROM questions WHERE title = 'Time commitment?')),
+    (1, 1),
+    (1, 2),
+    (2, 1),
+    (3, 2);
     
   INSERT INTO 
     replies (question_id, user_id, parent_id, body)
   VALUES
+    ((SELECT id FROM questions WHERE title = 'Building Hours?'), 
+    (SELECT id FROM users WHERE fname = 'Skylar'),
+    NULL,
+    'I believe the buildings opens at 11am, but don''t quote me on that!'),
+    
+    
     ((SELECT id FROM questions WHERE title = 'Time commitment?'),
       (SELECT id FROM users WHERE fname = 'John'),
       NULL,
       'You can expect to spend 40 hours per week on homework! Crazy, right?'),
+      
     ((SELECT id FROM questions WHERE title = 'Time commitment?'),
       (SELECT id FROM users WHERE fname = 'Debbie'),
-      (SELECT id FROM replies WHERE body = 'You can expect to spend 40 hours per week on homework! Crazy, right?'),
-      'Nah man, it''s way closer to 100 hours!');
-  -- 
+      2,
+      'Nah man, it''s way closer to 100 hours!'),
+      
+      (1, 1, 3, 'Golly heck, that''s a lot!'),
+      (1, 3, 3, 'Nice! I love work!');
+
   INSERT INTO
     question_likes (user_id, question_id)
   VALUES

@@ -36,16 +36,34 @@ class User
     User.new(user.first)
   end
   
-  def self.find_by_fname(first_name)
+  def self.find_by_name(first_name, last_name)
+    user = QuestionsDatabase.instance.execute(<<-SQL, first_name, last_name) 
+      SELECT *
+      FROM users 
+      WHERE fname = ? AND lname = ?
+    SQL
+    
+    return nil unless user.length > 0
+    
+    User.new(user.first)
   end
   
-  def self.find_by_lname(last_name)
+  def authored_questions
+    Question.find_by_author_id(@id)
+  end
+  
+  def authored_replies
+    Reply.find_by_user_id(@id)
   end
   
   def initialize(options)
     @id = options['id']
     @fname = options['fname']
     @lname = options['lname']
+  end
+  
+  def followed_questions
+    QuestionFollow.followed_questions_for_user_id(@id)
   end
   
   
@@ -87,12 +105,37 @@ class Question
     Question.new(question.first)
   end
   
+  def self.find_by_author_id(a_id)
+    array_questions = QuestionsDatabase.instance.execute(<<-SQL, a_id)
+      SELECT * 
+      FROM questions 
+      WHERE author_id = ?
+    SQL
+    
+    return nil unless array_questions.length > 0
+    
+    array_questions.map { |question| Question.new(question) }
+  end
+  
   def initialize(options)
     @id = options['id']
     @title = options['title']
     @body = options['body']
     @author_id = options['author_id']
   end
+  
+  def author
+    User.find_by_id(@author_id)
+  end
+  
+  def replies
+    Reply.find_by_question_id(@id)
+  end
+  
+  def followers 
+    QuestionFollow.followers_for_question_id(@id)
+  end
+  
 end
 
 
@@ -117,6 +160,41 @@ class QuestionFollow
     return nil unless question_follow.length > 0
     
     QuestionFollow.new(question_follow.first)
+  end
+  
+  def self.followers_for_question_id(question_id)
+    followers = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+      SELECT users.id, fname, lname 
+      FROM question_follows 
+      JOIN users ON users.id = question_follows.user_id 
+      WHERE question_id = ?;
+    SQL
+    
+    return nil unless followers.length > 0
+    
+    followers.map { |person| User.new(person) }
+  end
+  
+  def self.followed_questions_for_user_id(user_id)
+    followed = QuestionsDatabase.instance.execute(<<-SQL, user_id)
+      SELECT *
+      FROM question_follows
+      JOIN questions ON questions.id = question_follows.question_id
+      WHERE user_id = ?
+    SQL
+    
+    return nil unless followed.length > 0
+    
+    followed.map { |question| Question.new(question) }
+  end
+  
+  def self.most_followed_questions(n)
+    # most_followed = QuestionsDatabase.instance.execute(<<-SQL, n)
+    # SELECT *
+    # FROM questions
+    # JOIN followed_questions ON question_follows.question_id = questions.id
+    # WHERE COUNT
+    # SQL 
   end
   
   def initialize(options)
@@ -150,12 +228,65 @@ class Reply
     Reply.new(reply.first)
   end
   
+  def self.find_by_user_id(u_id)
+    
+    replies_array = QuestionsDatabase.instance.execute(<<-SQL, u_id)
+      SELECT *
+      FROM replies 
+      WHERE user_id = ?
+    SQL
+    
+    return nil unless replies_array.length > 0 
+    
+    replies_array.map { |reply| Reply.new(reply) }
+  end
+  
+  def self.find_by_question_id(q_id)
+    replies_array = QuestionsDatabase.instance.execute(<<-SQL, q_id)
+        SELECT *
+        FROM replies 
+        WHERE question_id = ? OR parent_id = ?
+      SQL
+      
+    return nil unless replies_array.length > 0 
+    
+    replies_array.map { |reply| Reply.new(reply) }
+  end
+  
   def initialize(options)
     @id = options['id']
     @question_id = options['question_id']
     @user_id = options['user_id']
     @parent_id = options['parent_id']
     @body = options['body']
+  end
+  
+  def author
+    User.find_by_id(@user_id)
+  end
+  
+  def question
+    Question.find_by_id(@question_id)
+  end
+  
+  def parent_reply
+    if @parent_id
+      Reply.find_by_id(@parent_id)
+    else
+      puts "No Parent Reply"
+    end
+  end
+  
+  def child_replies
+    replies_array = QuestionsDatabase.instance.execute(<<-SQL, @id)
+        SELECT *
+        FROM replies 
+        WHERE parent_id = ?
+      SQL
+      
+    return nil unless replies_array.length > 0 
+    
+    replies_array.map { |reply| Reply.new(reply) }
   end
 end 
 
